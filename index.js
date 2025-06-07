@@ -37,15 +37,15 @@ const bookingSchema = new mongoose.Schema({
 const Booking = mongoose.model('Booking', bookingSchema);
 
 // Example middleware to protect route
-function authenticateAdmin(req, res, next) {
-  const authHeader = req.headers.authorization;
+// function authenticateAdmin(req, res, next) {
+//   const authHeader = req.headers.authorization;
 
-  if (!authHeader || authHeader !== `Bearer ${process.env.ADMIN_TOKEN}`) {
-    return res.status(403).json({ message: "Forbidden: Invalid or missing token" });
-  }
+//   if (!authHeader || authHeader !== `Bearer ${process.env.ADMIN_TOKEN}`) {
+//     return res.status(403).json({ message: "Forbidden: Invalid or missing token" });
+//   }
 
-  next();
-}
+//   next();
+// }
 
 
 // Get available slots for a date
