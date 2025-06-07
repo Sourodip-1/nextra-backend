@@ -100,7 +100,7 @@ app.post('/api/book', async (req, res) => {
 });
 
 // Get all bookings for a date (no authentication)
-app.get('/api/bookings', async (req, res) => {
+app.get('/api/bookings', authenticateAdmin, async (req, res) => {
   const { date } = req.query;
   console.log("Date Query Parameter:", date);
   if (!date) {
