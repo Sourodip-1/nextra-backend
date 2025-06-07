@@ -41,6 +41,8 @@ const Booking = mongoose.model('Booking', bookingSchema);
 function authenticateAdmin(req, res, next) {
   const authHeader = req.headers.authorization;
 
+  console.log("Authorization Header:", authHeader);
+
   if (!authHeader || authHeader !== `Bearer ${process.env.ADMIN_TOKEN}`) {
     return res.status(403).json({ message: "Forbidden: Invalid or missing token" });
   }
