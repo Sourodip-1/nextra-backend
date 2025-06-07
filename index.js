@@ -50,7 +50,7 @@ app.get('/api/available-slots', (req, res) => {
 
 // Book a slot
 app.post('/api/book', (req, res) => {
-  const { name, slot, date } = req.body;
+  const { name, email, service, date, slot, message } = req.body;
   if (!name || !slot || !date || !SLOTS.includes(slot)) {
     return res.status(400).json({ message: 'Invalid name, date, or slot.' });
   }
@@ -63,7 +63,7 @@ app.post('/api/book', (req, res) => {
     return res.status(400).json({ message: 'Slot is full on this date.' });
   }
 
-  bookings[date][slot].push(name);
+  bookings[date][slot].push({'name': name, 'email': email, 'service': service, 'date': date, 'slot': slot, 'message': message});
   writeBookings(bookings);
 
   res.json({ message: 'Booking successful.' });
