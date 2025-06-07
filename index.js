@@ -9,29 +9,28 @@ const PORT = 3000;
 app.use(express.json());
 app.use(express.static('public'));
 app.use(cors({
-  origin: 'http://127.0.0.1:5500'
+  origin: ['http://127.0.0.1:5500', 'https://nextra-frontend-testing.vercel.app', 'https://dashboard-mu-ruddy.vercel.app'],
 }));
 
 const SLOTS = Array.from({ length: 10 }, (_, i) => `${9 + i}:00 - ${10 + i}:00`);
 const MAX_BOOKINGS_PER_SLOT = 5;
 
-// 👉 Replace this with your actual MongoDB connection string
+// MongoDB connection string
 const MONGODB_URI = 'mongodb+srv://sourox1919:p5OBnfrCN4CfrTzv@cluster0.yrklaal.mongodb.net/?retryWrites=true&w=majority&appName=Cluster0';
 
-// Connect to MongoDB Atlas
 mongoose.connect(MONGODB_URI, {
   useNewUrlParser: true,
   useUnifiedTopology: true
 }).then(() => console.log("MongoDB connected"))
   .catch(err => console.error("MongoDB connection error:", err));
 
-// Define booking schema
+// Booking schema
 const bookingSchema = new mongoose.Schema({
   name: String,
   email: String,
   service: String,
-  date: String, // e.g., '2025-06-11'
-  slot: String, // e.g., '10:00 - 11:00'
+  date: String,
+  slot: String,
   message: String
 });
 
@@ -100,8 +99,8 @@ app.post('/api/book', async (req, res) => {
   }
 });
 
-// Get all bookings for a date
-app.get('/api/bookings', authenticateAdmin, async (req, res) => {
+// Get all bookings for a date (no authentication)
+app.get('/api/bookings', async (req, res) => {
   const { date } = req.query;
   console.log("Date Query Parameter:", date);
   if (!date) {
