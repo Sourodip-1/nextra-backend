@@ -15,41 +15,26 @@ app.use(cors({
 const SLOTS = Array.from({ length: 10 }, (_, i) => `${9 + i}:00 - ${10 + i}:00`);
 const MAX_BOOKINGS_PER_SLOT = 5;
 
-// 👉 Replace this with your actual MongoDB connection string
+// MongoDB connection string
 const MONGODB_URI = 'mongodb+srv://sourox1919:p5OBnfrCN4CfrTzv@cluster0.yrklaal.mongodb.net/?retryWrites=true&w=majority&appName=Cluster0';
 
-// Connect to MongoDB Atlas
 mongoose.connect(MONGODB_URI, {
   useNewUrlParser: true,
   useUnifiedTopology: true
 }).then(() => console.log("MongoDB connected"))
   .catch(err => console.error("MongoDB connection error:", err));
 
-// Define booking schema
+// Booking schema
 const bookingSchema = new mongoose.Schema({
   name: String,
   email: String,
   service: String,
-  date: String, // e.g., '2025-06-11'
-  slot: String, // e.g., '10:00 - 11:00'
+  date: String,
+  slot: String,
   message: String
 });
 
 const Booking = mongoose.model('Booking', bookingSchema);
-
-// Example middleware to protect route
-function authenticateAdmin(req, res, next) {
-  const authHeader = req.headers.authorization;
-
-  console.log("Authorization Header:", authHeader);
-
-  if (!authHeader || authHeader !== `Bearer ${process.env.ADMIN_TOKEN}`) {
-    return res.status(403).json({ message: "Forbidden: Invalid or missing token" });
-  }
-
-  next();
-}
-
 
 // Get available slots for a date
 app.get('/api/available-slots', async (req, res) => {
@@ -102,8 +87,8 @@ app.post('/api/book', async (req, res) => {
   }
 });
 
-// Get all bookings for a date
-app.get('/api/bookings', authenticateAdmin, async (req, res) => {
+// Get all bookings for a date (no authentication)
+app.get('/api/bookings', async (req, res) => {
   const { date } = req.query;
   if (!date) {
     return res.status(400).json({ message: 'Date query parameter is required.' });
