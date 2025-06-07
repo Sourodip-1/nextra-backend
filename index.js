@@ -41,8 +41,6 @@ const Booking = mongoose.model('Booking', bookingSchema);
 function authenticateAdmin(req, res, next) {
   const authHeader = req.headers.authorization;
 
-  console.log("Authorization Header:", authHeader);
-
   if (!authHeader || authHeader !== `Bearer ${process.env.ADMIN_TOKEN}`) {
     return res.status(403).json({ message: "Forbidden: Invalid or missing token" });
   }
@@ -105,6 +103,7 @@ app.post('/api/book', async (req, res) => {
 // Get all bookings for a date
 app.get('/api/bookings', authenticateAdmin, async (req, res) => {
   const { date } = req.query;
+  console.log("Date Query Parameter:", date);
   if (!date) {
     return res.status(400).json({ message: 'Date query parameter is required.' });
   }
