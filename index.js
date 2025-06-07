@@ -1,89 +1,113 @@
 const express = require('express');
-const fs = require('fs');
-const path = require('path');
+const mongoose = require('mongoose');
+const cors = require('cors');
 const app = express();
 const PORT = 3000;
 
 app.use(express.json());
 app.use(express.static('public'));
-
-const cors = require('cors');
 app.use(cors({
   origin: 'http://127.0.0.1:5500'
 }));
 
-const FILE_PATH = path.join(__dirname, 'bookings.json');
 const SLOTS = Array.from({ length: 10 }, (_, i) => `${9 + i}:00 - ${10 + i}:00`);
 const MAX_BOOKINGS_PER_SLOT = 5;
 
-// Read bookings from file
-function readBookings() {
-  if (!fs.existsSync(FILE_PATH)) return {};
-  const data = fs.readFileSync(FILE_PATH);
-  return JSON.parse(data);
-}
+// 👉 Replace this with your actual MongoDB connection string
+const MONGODB_URI = 'mongodb+srv://sourox1919:p5OBnfrCN4CfrTzv@cluster0.yrklaal.mongodb.net/?retryWrites=true&w=majority&appName=Cluster0';
 
-// Write bookings to file
-function writeBookings(data) {
-  fs.writeFileSync(FILE_PATH, JSON.stringify(data, null, 2));
-}
+// Connect to MongoDB Atlas
+mongoose.connect(MONGODB_URI, {
+  useNewUrlParser: true,
+  useUnifiedTopology: true
+}).then(() => console.log("MongoDB connected"))
+  .catch(err => console.error("MongoDB connection error:", err));
 
-// Get all slots with their availability
-app.get('/api/available-slots', (req, res) => {
+// Define booking schema
+const bookingSchema = new mongoose.Schema({
+  name: String,
+  email: String,
+  service: String,
+  date: String, // e.g., '2025-06-11'
+  slot: String, // e.g., '10:00 - 11:00'
+  message: String
+});
+
+const Booking = mongoose.model('Booking', bookingSchema);
+
+// Get available slots for a date
+app.get('/api/available-slots', async (req, res) => {
   const { date } = req.query;
   if (!date) {
     return res.status(400).json({ message: 'Date query is required.' });
   }
 
-  const bookings = readBookings();
-  const slotsForDate = bookings[date] || {};
+  try {
+    const bookings = await Booking.find({ date });
 
-  const availableSlots = SLOTS
-    .filter(slot => (slotsForDate[slot]?.length || 0) < MAX_BOOKINGS_PER_SLOT)
-    .map(slot => ({
-      slot,
-      remaining: MAX_BOOKINGS_PER_SLOT - (slotsForDate[slot]?.length || 0)
-    }));
+    const slotCount = {};
+    bookings.forEach(b => {
+      slotCount[b.slot] = (slotCount[b.slot] || 0) + 1;
+    });
 
-  res.json(availableSlots);
+    const availableSlots = SLOTS
+      .filter(slot => (slotCount[slot] || 0) < MAX_BOOKINGS_PER_SLOT)
+      .map(slot => ({
+        slot,
+        remaining: MAX_BOOKINGS_PER_SLOT - (slotCount[slot] || 0)
+      }));
+
+    res.json(availableSlots);
+  } catch (err) {
+    res.status(500).json({ message: 'Error fetching available slots.' });
+  }
 });
 
 // Book a slot
-app.post('/api/book', (req, res) => {
+app.post('/api/book', async (req, res) => {
   const { name, email, service, date, slot, message } = req.body;
+
   if (!name || !slot || !date || !SLOTS.includes(slot)) {
     return res.status(400).json({ message: 'Invalid name, date, or slot.' });
   }
 
-  const bookings = readBookings();
-  bookings[date] = bookings[date] || {};
-  bookings[date][slot] = bookings[date][slot] || [];
+  try {
+    const existingBookings = await Booking.countDocuments({ date, slot });
+    if (existingBookings >= MAX_BOOKINGS_PER_SLOT) {
+      return res.status(400).json({ message: 'Slot is full on this date.' });
+    }
 
-  if (bookings[date][slot].length >= MAX_BOOKINGS_PER_SLOT) {
-    return res.status(400).json({ message: 'Slot is full on this date.' });
+    const booking = new Booking({ name, email, service, date, slot, message });
+    await booking.save();
+
+    res.json({ message: 'Booking successful.' });
+  } catch (err) {
+    res.status(500).json({ message: 'Error saving booking.' });
   }
-
-  bookings[date][slot].push({'name': name, 'email': email, 'service': service, 'date': date, 'slot': slot, 'message': message});
-  writeBookings(bookings);
-
-  res.json({ message: 'Booking successful.' });
 });
 
-//Show all bookings on a particular date
-
-app.get('/api/bookings', (req, res) => {
+// Get all bookings for a date
+app.get('/api/bookings', async (req, res) => {
   const { date } = req.query;
   if (!date) {
     return res.status(400).json({ message: 'Date query parameter is required.' });
   }
 
-  const bookings = readBookings();
-  const bookingsForDate = bookings[date] || {};
-  res.json(bookingsForDate);
+  try {
+    const bookings = await Booking.find({ date });
+    const grouped = {};
+
+    bookings.forEach(b => {
+      if (!grouped[b.slot]) grouped[b.slot] = [];
+      grouped[b.slot].push(b);
+    });
+
+    res.json(grouped);
+  } catch (err) {
+    res.status(500).json({ message: 'Error retrieving bookings.' });
+  }
 });
 
 app.listen(PORT, () => {
   console.log(`Server running on http://localhost:${PORT}`);
 });
-
-
