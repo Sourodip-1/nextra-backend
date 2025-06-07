@@ -1,3 +1,5 @@
+require('dotenv').config();
+
 const express = require('express');
 const mongoose = require('mongoose');
 const cors = require('cors');
@@ -34,6 +36,18 @@ const bookingSchema = new mongoose.Schema({
 });
 
 const Booking = mongoose.model('Booking', bookingSchema);
+
+// Example middleware to protect route
+function authenticateAdmin(req, res, next) {
+  const authHeader = req.headers.authorization;
+
+  if (!authHeader || authHeader !== `Bearer ${process.env.ADMIN_TOKEN}`) {
+    return res.status(403).json({ message: "Forbidden: Invalid or missing token" });
+  }
+
+  next();
+}
+
 
 // Get available slots for a date
 app.get('/api/available-slots', async (req, res) => {
@@ -87,7 +101,7 @@ app.post('/api/book', async (req, res) => {
 });
 
 // Get all bookings for a date
-app.get('/api/bookings', async (req, res) => {
+app.get('/api/bookings', authenticateAdmin, async (req, res) => {
   const { date } = req.query;
   if (!date) {
     return res.status(400).json({ message: 'Date query parameter is required.' });
