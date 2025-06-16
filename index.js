@@ -9,7 +9,7 @@ const PORT = 3000;
 app.use(express.json());
 app.use(express.static('public'));
 app.use(cors({
-  origin: ['http://127.0.0.1:5500', 'https://nextra-frontend-testing.vercel.app', 'https://dashboard-mu-ruddy.vercel.app'],
+  origin: ['http://127.0.0.1:5500/NEXTRA%20DIGITAL', 'https://nextra-frontend-testing.vercel.app', 'https://dashboard-mu-ruddy.vercel.app'],
 }));
 
 const SLOTS = Array.from({ length: 10 }, (_, i) => `${9 + i}:00 - ${10 + i}:00`);
