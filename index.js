@@ -13,6 +13,7 @@ app.use(cors({
     'http://127.0.0.1:5500',
     'https://nextra-frontend-testing.vercel.app',
     'https://dashboard-mu-ruddy.vercel.app'
+    'https://www.nexteradigital19.solutions'
   ],
 }));
 
